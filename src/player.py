@@ -11,6 +11,7 @@ class Player(Rect):
         self.bullets = []
         self.health = 3
         self.is_destroyed = False
+        self.iframes = 0
 
     def update(self):
         if px.btn(px.KEY_LEFT):
@@ -26,12 +27,19 @@ class Player(Rect):
         self.x = px.clamp(self.x, 0, px.width - self.w)
         update_list(self.bullets)
 
+        self.iframes = max(0, self.iframes - 1)
+
     def draw(self):
-        self.sprite.draw(self.x, self.y)
+        if self.iframes == 0 or self.iframes % 3 == 0:
+            self.sprite.draw(self.x, self.y)
         draw_list(self.bullets)
 
     def hit(self):
+        if self.iframes > 0:
+            return
+
         self.health -= 1
+        self.iframes = 90
         px.play(2, 2)
 
         if self.health <= 0:

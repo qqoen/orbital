@@ -1,4 +1,5 @@
 import pyxel as px
+from abc import ABC, abstractmethod
 
 
 def update_list(objects):
@@ -38,3 +39,13 @@ class Sprite:
 
     def draw(self, x, y):
         px.blt(x, y, 0, self.u, self.v, 16, 16, px.COLOR_BLACK)
+
+
+class State(ABC):
+    @abstractmethod
+    def update(self):
+        pass
+
+    @abstractmethod
+    def draw(self):
+        pass
