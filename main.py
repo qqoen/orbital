@@ -1,99 +1,34 @@
 import pyxel as px
+from src.enemy import Enemy
+from src.player import Player
+from src.common import *
 
 
-def update_list(objects):
-    for obj in objects:
-        obj.update()
-        if obj.is_destroyed:
-            objects.remove(obj)
+blue = Sprite(48, 0)
+red = Sprite(32, 0)
+yellow = Sprite(16, 0)
 
 
-def draw_list(objects):
-    for obj in objects:
-        obj.draw()
-
-
-def print_center(y, text, color, font):
-    width = font.text_width(text)
-    px.text(px.width // 2 - width // 2, y, text, color, font)
-
-
-class Rect:
-    def __init__(self, x, y, w, h):
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-
-    def intersects(self, other):
-        a = self.x + self.w > other.x and self.y + self.h > other.y
-        b = other.x + other.w > self.x and other.y + other.h > self.y
-        return a and b
-
-
-class Bullet(Rect):
-    def __init__(self, x, y):
-        super().__init__(x, y, 2, 8)
-        self.speed = 3
-        self.is_destroyed = False
-
-    def update(self):
-        self.y -= self.speed
-
-        if self.y <= 0:
-            self.is_destroyed = True
-
-    def draw(self):
-        px.rect(self.x, self.y, self.w, self.h, px.COLOR_WHITE)
-
-
-class Enemy(Rect):
-    def __init__(self, x, y):
-        super().__init__(x, y, 16, 16)
-        self.speed = 1
-        self.is_destroyed = False
-        self.start_x = x
-
-    def update(self):
-        if px.frame_count % 2 == 0:
-            self.x += self.speed
-
-        if self.x - self.start_x >= 112:
-            self.speed = -1
-
-        if self.x < self.start_x:
-            self.speed = 1
-
-    def draw(self):
-        px.blt(self.x, self.y, 0, 16, 0, 16, 16, px.COLOR_BLACK)
-
-
-class Player:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.w = 16
-        self.h = 16
-        self.speed = 2
-        self.bullets = []
-
-    def update(self):
-        if px.btn(px.KEY_LEFT):
-            self.x -= self.speed
-        elif px.btn(px.KEY_RIGHT):
-            self.x += self.speed
-
-        if px.btnp(px.KEY_SPACE):
-            bullet = Bullet(self.x + self.w // 2 - 1, self.y)
-            self.bullets.append(bullet)
-            px.play(0, 0)
-
-        self.x = px.clamp(self.x, 0, px.width - self.w)
-        update_list(self.bullets)
-
-    def draw(self):
-        px.blt(self.x, self.y, 0, 0, 0, 16, 16, px.COLOR_BLACK)
-        draw_list(self.bullets)
+ENEMIES = [
+    {
+        "health": 1,
+        "sprite": blue,
+        "is_shooting": False,
+        "score": 30,
+    },
+    {
+        "health": 2,
+        "sprite": red,
+        "is_shooting": False,
+        "score": 60,
+    },
+    {
+        "health": 1,
+        "sprite": yellow,
+        "is_shooting": True,
+        "score": 60,
+    },
+]
 
 
 class App:
@@ -101,16 +36,19 @@ class App:
     START = 1
     PLAY = 2
     WIN = 3
+    LOOSE = 4
 
     def __init__(self):
         px.init(300, 200, "Orbital", 60, px.KEY_ESCAPE, 2)
-        px.load("resources.pyxres")
+        px.load("assets/resources.pyxres")
+        self.font = px.Font("assets/umplus_j10r.bdf")
 
-        self.player = Player(px.width // 2, px.height - 16)
-        self.font = px.Font("umplus_j10r.bdf")
         self.state = App.BOOT
+        self.player = Player(0, 0)
         self.enemies = []
+        self.enemy_bullets = []
         self.victory_frames = -1
+        self.score = 0
 
         px.run(self.update, self.draw)
 
@@ -123,27 +61,43 @@ class App:
                 self.state = App.PLAY
                 px.play(1, 3)
 
+                self.player = Player(px.width // 2, px.height - self.player.h)
+                self.enemies.clear()
+                self.enemy_bullets.clear()
+                self.victory_frames = -1
+                self.score = 0
+
                 for i in range(10):
-                    self.enemies.append(Enemy(16 + i * 16, 16))
-                    self.enemies.append(Enemy(16 + i * 16, 32))
-        elif self.state == App.WIN:
+                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[2]))
+                    self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[0]))
+                    self.enemies.append(Enemy(16 + i * 16, 48, self.enemy_bullets, ENEMIES[1]))
+        elif self.state == App.WIN or self.state == App.LOOSE:
             if px.btnp(px.KEY_RETURN):
                 self.state = App.BOOT
         else:
             self.player.update()
 
-            for bullet in self.player.bullets:
-                for enemy in self.enemies:
+            for enemy in self.enemies:
+                for bullet in self.player.bullets:
                     if bullet.intersects(enemy):
                         bullet.is_destroyed = True
-                        enemy.is_destroyed = True
-                        px.play(2, 1)
+                        enemy.hit()
+
+                        if enemy.is_destroyed:
+                            self.score += enemy.score
                         break
-                
-                if bullet.is_destroyed:
+
+                if enemy.is_destroyed:
                     continue
 
+            for bullet in self.enemy_bullets:
+                if bullet.intersects(self.player):
+                    self.state = App.LOOSE
+                    px.play(1, 4)
+                    return
+
             update_list(self.enemies)
+            update_list(self.enemy_bullets)
 
             if len(self.enemies) == 0:
                 if self.victory_frames == -1:
@@ -168,11 +122,19 @@ class App:
 
             print_center(px.height - 32, "2026", px.COLOR_YELLOW, self.font)
         elif self.state == App.WIN:
-            print_center(px.height // 2 - 10, "Victory!", px.COLOR_YELLOW, self.font)
+            print_center(px.height // 2 - 20, "Victory!", px.COLOR_YELLOW, self.font)
+            print_center(px.height // 2 - 10, f"SCORE: {self.score}", px.COLOR_WHITE, self.font)
+            print_center(px.height // 2 + 10, "Press 'Enter' to continue", px.COLOR_GRAY, self.font)
+        elif self.state == App.LOOSE:
+            print_center(px.height // 2 - 20, "GAME OVER", px.COLOR_RED, self.font)
+            print_center(px.height // 2 - 10, f"SCORE: {self.score}", px.COLOR_WHITE, self.font)
             print_center(px.height // 2 + 10, "Press 'Enter' to continue", px.COLOR_GRAY, self.font)
         elif self.state == App.PLAY:
+            print_center(0, f"SCORE: {self.score}", px.COLOR_WHITE, self.font)
+
             self.player.draw()
             draw_list(self.enemies)
+            draw_list(self.enemy_bullets)
 
 
 if __name__ == "__main__":
