@@ -62,13 +62,22 @@ class PlayState:
         self.enemy_bullets = []
         self.victory_frames = -1
         self.score = 0
-
-        for i in range(10):
-            self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[2]))
-            self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[0]))
-            self.enemies.append(Enemy(16 + i * 16, 48, self.enemy_bullets, ENEMIES[1]))
+        self.wave = 0
+        self.max_wave = 3
 
     def update(self):
+        if len(self.enemies) == 0:
+            self.wave += 1
+
+            if self.wave <= self.max_wave:
+                self._setup_wave()
+            elif self.victory_frames == -1:
+                self.victory_frames = px.frame_count
+            elif px.frame_count - self.victory_frames >= 60:
+                self.app.state = EndState(self.app, True, self.score * self.player.health)
+                px.play(1, 5)
+                return
+
         self.player.update()
 
         for enemy in self.enemies:
@@ -98,19 +107,29 @@ class PlayState:
         update_list(self.enemies)
         update_list(self.enemy_bullets)
 
-        if len(self.enemies) == 0:
-            if self.victory_frames == -1:
-                self.victory_frames = px.frame_count
-            elif px.frame_count - self.victory_frames >= 60:
-                self.app.state = EndState(self.app, True, self.score)
-                px.play(1, 5)
-
     def draw(self):
         print_center(0, f"SCORE: {self.score}", px.COLOR_WHITE, self.app.font)
         px.text(0, 0, "@" * self.player.health, px.COLOR_WHITE, self.app.font)
         self.player.draw()
         draw_list(self.enemies)
         draw_list(self.enemy_bullets)
+
+    def _setup_wave(self):
+        match self.wave:
+            case 1:
+                for i in range(10):
+                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[0]))
+
+            case 2:
+                for i in range(10):
+                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[1]))
+                    self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[0]))
+
+            case 3:
+                for i in range(10):
+                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[2]))
+                    self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[0]))
+                    self.enemies.append(Enemy(16 + i * 16, 48, self.enemy_bullets, ENEMIES[1]))
 
 
 class EndState:
@@ -126,11 +145,11 @@ class EndState:
     def draw(self):
         if self.is_win:
             print_center(px.height // 2 - 20, "Victory!", px.COLOR_YELLOW, self.app.font)
-            print_center(px.height // 2 - 10, f"SCORE: {self.score}", px.COLOR_WHITE, self.app.font)
+            print_center(px.height // 2 - 10, f"Final score: {self.score}", px.COLOR_WHITE, self.app.font)
             print_center(px.height // 2 + 10, "Press 'Enter' to continue", px.COLOR_GRAY, self.app.font)
         else:
             print_center(px.height // 2 - 20, "GAME OVER", px.COLOR_RED, self.app.font)
-            print_center(px.height // 2 - 10, f"SCORE: {self.score}", px.COLOR_WHITE, self.app.font)
+            print_center(px.height // 2 - 10, f"Final score: {self.score}", px.COLOR_WHITE, self.app.font)
             print_center(px.height // 2 + 10, "Press 'Enter' to continue", px.COLOR_GRAY, self.app.font)
 
 
