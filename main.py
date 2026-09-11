@@ -32,6 +32,7 @@ class App:
         self.font = px.Font("assets/umplus_j10r.bdf")
         self._state: State = StartState(self)
         self._bg = Background()
+        self.highscore = 0
         px.run(self.update, self.draw)
 
     def update(self):

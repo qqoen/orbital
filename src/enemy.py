@@ -7,38 +7,46 @@ class Enemy(Rect):
     def __init__(self, x, y, bullets, enemy_type):
         super().__init__(x, y, 16, 16)
         self._bullets = bullets
-        self.health = enemy_type["health"]
-        self.sprite = enemy_type["sprite"]
-        self.is_shooting = enemy_type["is_shooting"]
+        self._health = enemy_type["health"]
+        self._sprite = enemy_type["sprite"]
+        self._is_shooting = enemy_type["is_shooting"]
         self.score = enemy_type["score"]
+        self._xspeed = enemy_type["xspeed"]
+        self._yspeed = enemy_type["yspeed"]
 
-        self.speed = 1
-        self.is_destroyed = False
-        self.start_x = x
+        self._xdir = 1
+        self._start_x = x
         self._shoot_frame = -200
+
+        self.is_destroyed = False
 
     def update(self):
         if px.frame_count % 2 == 0:
-            self.x += self.speed
+            self.x += self._xspeed * self._xdir
 
-        if self.x - self.start_x >= 112:
-            self.speed = -1
+        if self.x - self._start_x >= 112:
+            self._xdir = -1
+        elif self.x < self._start_x:
+            self._xdir = 1
 
-        if self.x < self.start_x:
-            self.speed = 1
+        self.y += self._yspeed
 
-        if self.is_shooting and px.frame_count - self._shoot_frame >= 240 and px.rndi(1, 100) <= 1:
+        if self._is_shooting and px.frame_count - self._shoot_frame >= 240 and px.rndi(1, 100) <= 1:
             bullet = Bullet(self.x + self.w // 2 - 1, self.y + self.h, -2, px.COLOR_YELLOW)
             self._bullets.append(bullet)
             self._shoot_frame = px.frame_count
 
+        if self.y >= px.height:
+            self.is_destroyed = True
+
     def draw(self):
-        self.sprite.draw(self.x, self.y)
+        self._sprite.draw(self.x, self.y)
 
     def hit(self):
-        self.health -= 1
-        px.play(2, 2)
+        self._health -= 1
 
-        if self.health <= 0:
+        if self._health <= 0:
             self.is_destroyed = True
             px.play(2, 1)
+        else:
+            px.play(2, 2)

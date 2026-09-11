@@ -10,6 +10,7 @@ class EndState(State):
 
     def update(self):
         if px.btnp(px.KEY_RETURN):
+            self.app.highscore = max(self.app.highscore, self.score)
             self.app.switch("start")
 
     def draw(self):

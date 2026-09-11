@@ -18,6 +18,10 @@ class StartState(State):
 
     def draw(self):
         print_center(32, "O R B I T A L", px.frame_count % len(px.colors), self.app.font)
+
+        if self.app.highscore > 0:
+            print_center(64, f"Highscore: {self.app.highscore}", px.COLOR_YELLOW, self.app.font)
+
         print_center(px.height // 2 - 10, "Press 'Enter' to start", px.COLOR_WHITE, self.app.font)
         px.text(64, px.height // 2 + 10, "Press Space to shot", px.COLOR_GRAY, self.app.font)
         px.text(64, px.height // 2 + 20, "Left or Right to move", px.COLOR_GRAY, self.app.font)
