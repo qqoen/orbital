@@ -17,7 +17,7 @@ class StartState(State):
             px.play(1, 3)
 
     def draw(self):
-        print_center(32, "O R B I T A L", px.COLOR_LIGHT_BLUE, self.app.font)
+        print_center(32, "O R B I T A L", px.frame_count % len(px.colors), self.app.font)
         print_center(px.height // 2 - 10, "Press 'Enter' to start", px.COLOR_WHITE, self.app.font)
         px.text(64, px.height // 2 + 10, "Press Space to shot", px.COLOR_GRAY, self.app.font)
         px.text(64, px.height // 2 + 20, "Left or Right to move", px.COLOR_GRAY, self.app.font)

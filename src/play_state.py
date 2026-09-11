@@ -31,12 +31,35 @@ ENEMIES = [
 ]
 
 
+class Bonus(Rect):
+    def __init__(self, x, y, score):
+        super().__init__(x, y, 7, 7)
+        self.score = score
+        self.speed = 1
+        self.is_destroyed = False
+
+    def update(self):
+        self.y += self.speed
+
+        if self.y >= px.height:
+            self.is_destroyed = True
+
+    def draw(self):
+        px.rect(self.x, self.y, self.w, self.h, px.COLOR_DARK_BLUE)
+        px.text(self.x + 2, self.y + 1, "T", px.COLOR_WHITE)
+
+    def pick(self):
+        px.play(1, 3)
+        self.is_destroyed = True
+
+
 class PlayState(State):
     def __init__(self, app):
         self.app = app
         self.player = Player(px.width // 2, px.height - 16)
         self.enemies = []
         self.enemy_bullets = []
+        self.bonuses = []
         self.victory_frames = -1
         self.score = 0
         self.wave = 0
@@ -51,10 +74,7 @@ class PlayState(State):
             elif self.victory_frames == -1:
                 self.victory_frames = px.frame_count
             elif px.frame_count - self.victory_frames >= 60:
-                self.app.switch("end", {
-                    "is_win": True,
-                    "score": self.score * self.player.health,
-                })
+                self.app.switch("end", is_win=True, score=self.score * self.player.health)
                 px.play(1, 5)
                 return
 
@@ -68,6 +88,9 @@ class PlayState(State):
 
                     if enemy.is_destroyed:
                         self.score += enemy.score
+
+                        if px.rndi(1, 100) <= 25:
+                            self.bonuses.append(Bonus(enemy.x + enemy.w // 2 - 3, enemy.y + enemy.h // 2, enemy.score))
                     break
 
             if enemy.is_destroyed:
@@ -79,16 +102,19 @@ class PlayState(State):
                 bullet.is_destroyed = True
                 break
 
+        for bonus in self.bonuses:
+            if bonus.intersects(self.player):
+                bonus.pick()
+                self.score += bonus.score
+
         if self.player.is_destroyed:
-            self.app.switch("end", {
-                    "is_win": False,
-                    "score": self.score,
-                })
+            self.app.switch("end", is_win=False, score=self.score)
             px.play(1, 4)
             return
 
         update_list(self.enemies)
         update_list(self.enemy_bullets)
+        update_list(self.bonuses)
 
     def draw(self):
         print_center(0, f"SCORE: {self.score}", px.COLOR_WHITE, self.app.font)
@@ -96,6 +122,7 @@ class PlayState(State):
         self.player.draw()
         draw_list(self.enemies)
         draw_list(self.enemy_bullets)
+        draw_list(self.bonuses)
 
     def _setup_wave(self):
         match self.wave:
