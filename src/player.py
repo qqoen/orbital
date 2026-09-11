@@ -9,6 +9,8 @@ class Player(Rect):
         self.sprite = Sprite(0, 0)
         self.speed = 2
         self.bullets = []
+        self.health = 3
+        self.is_destroyed = False
 
     def update(self):
         if px.btn(px.KEY_LEFT):
@@ -27,3 +29,11 @@ class Player(Rect):
     def draw(self):
         self.sprite.draw(self.x, self.y)
         draw_list(self.bullets)
+
+    def hit(self):
+        self.health -= 1
+        px.play(2, 2)
+
+        if self.health <= 0:
+            self.is_destroyed = True
+            px.play(2, 1)
