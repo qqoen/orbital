@@ -50,7 +50,7 @@ ENEMIES = [
         "is_shooting": False,
         "score": 40,
         "xspeed": 1,
-        "yspeed": 0.5,
+        "yspeed": 1,
     },
 ]
 
@@ -128,15 +128,12 @@ class PlayState(State):
             for bullet in self.player.bullets:
                 if bullet.intersects(enemy):
                     bullet.is_destroyed = True
-                    enemy.hit()
-
-                    if enemy.is_destroyed:
-                        self.score += enemy.score
-                        self.blasts.append(Blast(enemy.x + enemy.w // 2, enemy.y + enemy.h // 2))
-
-                        if px.rndi(1, 100) <= 25:
-                            self.bonuses.append(Bonus(enemy.x + enemy.w // 2 - 3, enemy.y + enemy.h // 2, enemy.score))
+                    self._hit_enemy(enemy)
                     break
+
+            if enemy.intersects(self.player):
+                self.player.hit()
+                self._hit_enemy(enemy)
 
             if enemy.is_destroyed:
                 continue
@@ -161,6 +158,16 @@ class PlayState(State):
         update_list(self.enemy_bullets)
         update_list(self.bonuses)
         update_list(self.blasts)
+
+    def _hit_enemy(self, enemy):
+        enemy.hit()
+
+        if enemy.is_destroyed:
+            self.score += enemy.score
+            self.blasts.append(Blast(enemy.x + enemy.w // 2, enemy.y + enemy.h // 2))
+
+            if px.rndi(1, 100) <= 25:
+                self.bonuses.append(Bonus(enemy.x + enemy.w // 2 - 3, enemy.y + enemy.h // 2, enemy.score))
 
     def draw(self):
         print_center(0, f"SCORE: {self.score:5}", px.COLOR_WHITE, self.app.font)

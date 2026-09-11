@@ -49,3 +49,22 @@ class State(ABC):
     @abstractmethod
     def draw(self):
         pass
+
+
+class Timer:
+    def __init__(self, max_ticks):
+        self._max_ticks = max_ticks
+        self._ticks = 0
+
+    @property
+    def done(self):
+        return self._ticks == 0
+
+    def start(self):
+        self._ticks = self._max_ticks
+
+    def stop(self):
+        self._ticks = 0
+
+    def update(self):
+        self._ticks = max(0, self._ticks - 1)
