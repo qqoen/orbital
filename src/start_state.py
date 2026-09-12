@@ -32,4 +32,4 @@ class StartState(State):
         px.text(64, px.height // 2 + 10, "Press Space to shot", px.COLOR_GRAY, self._font)
         px.text(64, px.height // 2 + 20, "Left or Right to move", px.COLOR_GRAY, self._font)
         px.text(64, px.height // 2 + 30, "or Escape to exit", px.COLOR_GRAY, self._font)
-        print_center(px.height - 32, "2026", px.COLOR_YELLOW, self._font)
+        print_center(px.height - 32, "made in 2026", px.COLOR_YELLOW, self._font)

@@ -18,7 +18,7 @@ class Background:
 
             if self.direction < 0 and y < 0:
                 y += px.height
-            
+
             self.stars[i] = (x, y, speed)
 
     def draw(self):

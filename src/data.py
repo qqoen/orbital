@@ -53,7 +53,7 @@ ENEMIES = {
         "bonus_chance": 25,
     },
     "boss": {
-        "health": 18,
+        "health": 15,
         "sprite": Sprite(0, 16),
         "shoot_cd": 50,
         "score": 500,

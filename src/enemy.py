@@ -26,7 +26,7 @@ class Enemy(Rect):
         self._spawn_y = y
         self.x = x
         self.y = y - 32
-    
+
         self._health = enemy_type["health"]
         self._sprite = enemy_type["sprite"]
         self._score = enemy_type["score"]
@@ -38,7 +38,7 @@ class Enemy(Rect):
 
         self._xdir = 1
         self._start_x = x
-        self._approach_timer = Timer(px.rndi(250, 2000)) 
+        self._approach_timer = Timer(px.rndi(250, 2000))
         self._approach_timer.start()
         self._is_spawned = False
 

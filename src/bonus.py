@@ -18,7 +18,7 @@ class Bonus(Rect):
     def draw(self):
         color = px.COLOR_WHITE if px.frame_count % 6 == 0 else px.COLOR_DARK_BLUE
         px.rect(self.x, self.y, self.w, self.h, color)
-        px.text(self.x + 2, self.y + 1, "T", px.COLOR_WHITE)
+        px.text(self.x + 2, self.y + 1, "B", px.COLOR_WHITE)
 
     def pick(self):
         px.play(1, 3)
