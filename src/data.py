@@ -10,6 +10,7 @@ ENEMIES = {
         "xspeed": 1,
         "yspeed": 0,
         "can_approach": True,
+        "bonus_chance": 10,
     },
     "shield": {
         "health": 2,
@@ -19,6 +20,7 @@ ENEMIES = {
         "xspeed": 1,
         "yspeed": 0,
         "can_approach": True,
+        "bonus_chance": 25,
     },
     "shooter": {
         "health": 1,
@@ -28,6 +30,7 @@ ENEMIES = {
         "xspeed": 1,
         "yspeed": 0,
         "can_approach": True,
+        "bonus_chance": 25,
     },
     "fast": {
         "health": 1,
@@ -37,6 +40,7 @@ ENEMIES = {
         "xspeed": 2,
         "yspeed": 0,
         "can_approach": True,
+        "bonus_chance": 25,
     },
     "diver": {
         "health": 1,
@@ -46,14 +50,16 @@ ENEMIES = {
         "xspeed": 1,
         "yspeed": 1,
         "can_approach": False,
+        "bonus_chance": 25,
     },
     "boss": {
         "health": 18,
         "sprite": Sprite(0, 16),
         "shoot_cd": 50,
-        "score": 1000,
+        "score": 500,
         "xspeed": 1,
         "yspeed": 0,
         "can_approach": False,
+        "bonus_chance": 100,
     },
 }

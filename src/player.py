@@ -21,7 +21,7 @@ class Player(Rect):
         elif px.btn(px.KEY_RIGHT):
             self.x += self.speed
 
-        if self._shot_timer.done and px.btn(px.KEY_SPACE):
+        if self._shot_timer.done and (px.btn(px.KEY_SPACE) or px.btn(px.KEY_Z)):
             bullet = Bullet(self.x + self.w // 2 - 1, self.y, 3, px.COLOR_WHITE)
             self.bullets.append(bullet)
             px.play(0, 0)

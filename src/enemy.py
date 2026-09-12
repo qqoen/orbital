@@ -1,6 +1,7 @@
 import pyxel as px
 from src.common import *
 from src.bullet import Bullet
+from src.bonus import Bonus
 
 
 class BulletEmitter:
@@ -32,6 +33,7 @@ class Enemy(Rect):
         self._xspeed = enemy_type["xspeed"]
         self._yspeed = enemy_type["yspeed"]
         self._can_approach = enemy_type["can_approach"]
+        self._bonus_chance = enemy_type["bonus_chance"]
         self._emitter = emitter
 
         self._xdir = 1
@@ -85,9 +87,16 @@ class Enemy(Rect):
 
     def hit(self):
         self._health -= 1
+        drops = []
 
         if self._health <= 0:
             self.is_destroyed = True
             px.play(2, 1)
+
+            if px.rndi(1, 100) <= self._bonus_chance:
+                drops.append(Bonus(self.x + self.w // 2 - 3, self.y + self.h // 2, self._score))
         else:
             px.play(2, 2)
+
+        return drops
+

@@ -3,14 +3,15 @@ from src.enemy import Enemy, BulletEmitter
 from src.player import Player
 from src.common import *
 from src.background import Background
-from src.bonus import Bonus
 from src.blast import Blast
 from src.data import ENEMIES
 
 
 class PlayState(State):
-    def __init__(self, app):
-        self.app = app
+    def __init__(self, sm, assets, player_data):
+        self._sm = sm
+        self._font = assets["font"]
+        self._highscore = player_data.highscore
         self.player = Player(px.width // 2, px.height - 16)
         self.enemies = []
         self.enemy_bullets = []
@@ -27,7 +28,7 @@ class PlayState(State):
     def update(self):
         self._bg.update()
 
-        if len(self.enemies) == 0:
+        if len(self.enemies) == 0 and len(self.bonuses) == 0:
             self.wave += 1
             self.chain_timer.stop()
             self.chain_count = 0
@@ -37,7 +38,7 @@ class PlayState(State):
             elif self.victory_frames == -1:
                 self.victory_frames = px.frame_count
             elif px.frame_count - self.victory_frames >= 60:
-                self.app.switch("end", is_win=True, score=self.score * self.player.health)
+                self._sm.switch("end", is_win=True, score=self.score * self.player.health)
                 px.play(1, 5)
                 return
 
@@ -69,7 +70,7 @@ class PlayState(State):
                 self._add_score(bonus.score)
 
         if self.player.is_destroyed:
-            self.app.switch("end", is_win=False, score=self.score)
+            self._sm.switch("end", is_win=False, score=self.score)
             px.play(1, 4)
             return
 
@@ -88,15 +89,12 @@ class PlayState(State):
         self.chain_count = 0
 
     def _hit_enemy(self, enemy):
-        enemy.hit()
+        drops = enemy.hit()
+        self.bonuses.extend(drops)
 
         if enemy.is_destroyed:
             self._add_score(enemy.score * max(1, self.chain_count))
             self.blasts.append(Blast(enemy.x + enemy.w // 2, enemy.y + enemy.h // 2))
-
-            if px.rndi(1, 100) <= 25:
-                self.bonuses.append(Bonus(enemy.x + enemy.w // 2 - 3, enemy.y + enemy.h // 2, enemy.score))
-
             self.chain_timer.start()
             self.chain_count = min(5, self.chain_count + 1)
 
@@ -108,8 +106,8 @@ class PlayState(State):
         self._bg.draw()
 
         s_text = f"SCORE: {self.score:5}"
-        s_width = self.app.font.text_width(s_text)
-        print_center(0, s_text, px.COLOR_WHITE, self.app.font)
+        s_width = self._font.text_width(s_text)
+        print_center(0, s_text, px.COLOR_WHITE, self._font)
 
         if not self.chain_timer.done and self.chain_count > 1:
             ratio = self.chain_timer.left / self.chain_timer.max
@@ -117,14 +115,14 @@ class PlayState(State):
             hline(px.width // 2 - s_width // 2, 10, line_w)
             px.text(px.width // 2 + s_width // 2 + 2, 8, f"x{self.chain_count}", px.COLOR_WHITE)
 
-        hs_text = f"HIGH: {self.app.highscore:5}"
-        hs_width = self.app.font.text_width(hs_text)
-        px.text(px.width - hs_width, 0, hs_text, px.COLOR_WHITE, self.app.font)
+        hs_text = f"HIGH: {self._highscore:5}"
+        hs_width = self._font.text_width(hs_text)
+        px.text(px.width - hs_width, 0, hs_text, px.COLOR_WHITE, self._font)
         
-        px.text(0, 0, "@" * self.player.health, px.COLOR_WHITE, self.app.font)
+        px.text(0, 0, "@" * self.player.health, px.COLOR_WHITE, self._font)
 
         if self.wave <= self.max_wave:
-            px.text(30, 0, f"WAVE: {self.wave}", px.COLOR_WHITE, self.app.font)
+            px.text(30, 0, f"WAVE: {self.wave}", px.COLOR_WHITE, self._font)
 
         self.player.draw()
         draw_list(self.enemies)
