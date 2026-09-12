@@ -19,6 +19,10 @@ def print_center(y, text, color, font):
     px.text(px.width // 2 - width // 2, y, text, color, font)
 
 
+def hline(x, y, width):
+    px.line(x, y, x + width, y, px.COLOR_WHITE)
+
+
 class Rect:
     def __init__(self, x, y, w, h):
         self.x = x
@@ -59,6 +63,14 @@ class Timer:
     @property
     def done(self):
         return self._ticks == 0
+
+    @property
+    def max(self):
+        return self._max_ticks
+
+    @property
+    def left(self):
+        return self._ticks
 
     def start(self):
         self._ticks = self._max_ticks

@@ -1,3 +1,4 @@
+from src.common import hline
 from src.common import draw_list
 import pyxel as px
 from src.enemy import Enemy
@@ -16,7 +17,7 @@ ENEMIES = [
         "health": 1,
         "sprite": blue,
         "is_shooting": False,
-        "score": 30,
+        "score": 10,
         "xspeed": 1,
         "yspeed": 0,
     },
@@ -24,7 +25,7 @@ ENEMIES = [
         "health": 2,
         "sprite": red,
         "is_shooting": False,
-        "score": 60,
+        "score": 20,
         "xspeed": 1,
         "yspeed": 0,
     },
@@ -32,7 +33,7 @@ ENEMIES = [
         "health": 1,
         "sprite": yellow,
         "is_shooting": True,
-        "score": 60,
+        "score": 20,
         "xspeed": 1,
         "yspeed": 0,
     },
@@ -40,7 +41,7 @@ ENEMIES = [
         "health": 1,
         "sprite": green,
         "is_shooting": False,
-        "score": 40,
+        "score": 15,
         "xspeed": 2,
         "yspeed": 0,
     },
@@ -48,7 +49,7 @@ ENEMIES = [
         "health": 1,
         "sprite": green,
         "is_shooting": False,
-        "score": 40,
+        "score": 15,
         "xspeed": 1,
         "yspeed": 1,
     },
@@ -109,9 +110,14 @@ class PlayState(State):
         self.wave = 0
         self.max_wave = 5
 
+        self.chain_timer = Timer(60)
+        self.chain_count = 0
+
     def update(self):
         if len(self.enemies) == 0:
             self.wave += 1
+            self.chain_timer.stop()
+            self.chain_count = 0
 
             if self.wave <= self.max_wave:
                 self._setup_wave()
@@ -132,7 +138,7 @@ class PlayState(State):
                     break
 
             if enemy.intersects(self.player):
-                self.player.hit()
+                self._hit_player()
                 self._hit_enemy(enemy)
 
             if enemy.is_destroyed:
@@ -140,14 +146,14 @@ class PlayState(State):
 
         for bullet in self.enemy_bullets:
             if bullet.intersects(self.player):
-                self.player.hit()
+                self._hit_player()
                 bullet.is_destroyed = True
                 break
 
         for bonus in self.bonuses:
             if bonus.intersects(self.player):
                 bonus.pick()
-                self.score += bonus.score
+                self._add_score(bonus.score)
 
         if self.player.is_destroyed:
             self.app.switch("end", is_win=False, score=self.score)
@@ -158,20 +164,43 @@ class PlayState(State):
         update_list(self.enemy_bullets)
         update_list(self.bonuses)
         update_list(self.blasts)
+        self.chain_timer.update()
+
+        if self.chain_timer.done:
+            self.chain_count = 0
+
+    def _hit_player(self):
+        self.player.hit()
+        self.chain_timer.stop()
+        self.chain_count = 0
 
     def _hit_enemy(self, enemy):
         enemy.hit()
 
         if enemy.is_destroyed:
-            self.score += enemy.score
+            self._add_score(enemy.score * max(1, self.chain_count))
             self.blasts.append(Blast(enemy.x + enemy.w // 2, enemy.y + enemy.h // 2))
 
             if px.rndi(1, 100) <= 25:
                 self.bonuses.append(Bonus(enemy.x + enemy.w // 2 - 3, enemy.y + enemy.h // 2, enemy.score))
 
+            self.chain_timer.start()
+            self.chain_count = min(5, self.chain_count + 1)
+
+    def _add_score(self, amount):
+        self.score += amount
+
     def draw(self):
-        print_center(0, f"SCORE: {self.score:5}", px.COLOR_WHITE, self.app.font)
-        
+        s_text = f"SCORE: {self.score:5}"
+        s_width = self.app.font.text_width(s_text)
+        print_center(0, s_text, px.COLOR_WHITE, self.app.font)
+
+        if not self.chain_timer.done and self.chain_count > 1:
+            ratio = self.chain_timer.left / self.chain_timer.max
+            line_w = s_width * ratio
+            hline(px.width // 2 - s_width // 2, 10, line_w)
+            px.text(px.width // 2 + s_width // 2 + 2, 8, f"x{self.chain_count}", px.COLOR_WHITE)
+
         hs_text = f"HIGH: {self.app.highscore:5}"
         hs_width = self.app.font.text_width(hs_text)
         px.text(px.width - hs_width, 0, hs_text, px.COLOR_WHITE, self.app.font)
