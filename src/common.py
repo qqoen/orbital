@@ -23,6 +23,12 @@ def hline(x, y, width):
     px.line(x, y, x + width, y, px.COLOR_WHITE)
 
 
+def approach(val, target):
+    diff = val - target
+    val += -px.sgn(diff) * 1
+    return val
+
+
 class Rect:
     def __init__(self, x, y, w, h):
         self.x = x
@@ -53,6 +59,30 @@ class State(ABC):
     @abstractmethod
     def draw(self):
         pass
+
+
+class StateMachine:
+    def __init__(self):
+        self._state_types = {}
+        self._state: State | None = None
+
+    def register(self, state_name: str, constructor):
+        if state_name in self._state_types:
+            raise ValueError(f"State '{state_name}' is already registered.")
+        self._state_types[state_name] = constructor
+
+    def switch(self, state_name: str, **payload):
+        if state_name not in self._state_types:
+            raise ValueError(f"State '{state_name}' is not registered.")
+        self._state = self._state_types[state_name](payload)
+
+    def update(self):
+        if self._state is not None:
+            self._state.update()
+
+    def draw(self):
+        if self._state is not None:
+            self._state.draw()
 
 
 class Timer:

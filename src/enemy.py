@@ -6,6 +6,11 @@ from src.bullet import Bullet
 class Enemy(Rect):
     def __init__(self, x, y, bullets, enemy_type):
         super().__init__(x, y, 16, 16)
+        self._spawn_x = x
+        self._spawn_y = y
+        self.x = x
+        self.y = y - 32
+    
         self._bullets = bullets
         self._health = enemy_type["health"]
         self._sprite = enemy_type["sprite"]
@@ -19,6 +24,7 @@ class Enemy(Rect):
         self._shoot_cooldown = Timer(120)
         self._approach_timer = Timer(px.rndi(250, 2000)) 
         self._approach_timer.start()
+        self._is_spawned = False
 
         self.is_destroyed = False
 
@@ -30,6 +36,15 @@ class Enemy(Rect):
         return self._score
 
     def update(self):
+        # spawn phase
+        if not self._is_spawned:
+            self.x = approach(self.x, self._spawn_x)
+            self.y = approach(self.y, self._spawn_y)
+            if self.x == self._spawn_x and self.y == self._spawn_y:
+                self._is_spawned = True
+            return
+        self._is_spawned = True
+
         if px.frame_count % 2 == 0:
             self.x += self._xspeed * self._xdir
 

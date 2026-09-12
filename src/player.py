@@ -13,21 +13,25 @@ class Player(Rect):
         self.is_destroyed = False
         self.iframes = 0
 
+        self._shot_timer = Timer(15)
+
     def update(self):
         if px.btn(px.KEY_LEFT):
             self.x -= self.speed
         elif px.btn(px.KEY_RIGHT):
             self.x += self.speed
 
-        if px.btnp(px.KEY_SPACE):
+        if self._shot_timer.done and px.btn(px.KEY_SPACE):
             bullet = Bullet(self.x + self.w // 2 - 1, self.y, 3, px.COLOR_WHITE)
             self.bullets.append(bullet)
             px.play(0, 0)
+            self._shot_timer.start()
 
         self.x = px.clamp(self.x, 0, px.width - self.w)
         update_list(self.bullets)
 
         self.iframes = max(0, self.iframes - 1)
+        self._shot_timer.update()
 
     def draw(self):
         if self.iframes == 0 or self.iframes % 3 == 0:

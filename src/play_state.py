@@ -1,9 +1,10 @@
-from src.common import hline
-from src.common import draw_list
 import pyxel as px
 from src.enemy import Enemy
 from src.player import Player
 from src.common import *
+from src.background import Background
+from src.bonus import Bonus
+from src.blast import Blast
 
 
 yellow = Sprite(16, 0)
@@ -56,47 +57,6 @@ ENEMIES = [
 ]
 
 
-class Bonus(Rect):
-    def __init__(self, x, y, score):
-        super().__init__(x, y, 7, 7)
-        self.score = score
-        self.speed = 1
-        self.is_destroyed = False
-
-    def update(self):
-        self.y += self.speed
-
-        if self.y >= px.height:
-            self.is_destroyed = True
-
-    def draw(self):
-        color = px.COLOR_WHITE if px.frame_count % 6 == 0 else px.COLOR_DARK_BLUE
-        px.rect(self.x, self.y, self.w, self.h, color)
-        px.text(self.x + 2, self.y + 1, "T", px.COLOR_WHITE)
-
-    def pick(self):
-        px.play(1, 3)
-        self.is_destroyed = True
-
-
-class Blast:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.radius = 1
-        self.max_radius = 8
-        self.is_destroyed = False
-
-    def update(self):
-        self.radius += 1
-        if self.radius > self.max_radius:
-            self.is_destroyed = True
-
-    def draw(self):
-        px.circ(self.x, self.y, self.radius, px.COLOR_YELLOW)
-        px.circb(self.x, self.y, self.radius, px.COLOR_RED)
-
-
 class PlayState(State):
     def __init__(self, app):
         self.app = app
@@ -109,11 +69,13 @@ class PlayState(State):
         self.score = 0
         self.wave = 0
         self.max_wave = 5
-
         self.chain_timer = Timer(60)
         self.chain_count = 0
+        self._bg = Background()
 
     def update(self):
+        self._bg.update()
+
         if len(self.enemies) == 0:
             self.wave += 1
             self.chain_timer.stop()
@@ -191,6 +153,9 @@ class PlayState(State):
         self.score += amount
 
     def draw(self):
+        px.cls(px.COLOR_BLACK)
+        self._bg.draw()
+
         s_text = f"SCORE: {self.score:5}"
         s_width = self.app.font.text_width(s_text)
         print_center(0, s_text, px.COLOR_WHITE, self.app.font)

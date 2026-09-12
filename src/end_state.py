@@ -14,6 +14,8 @@ class EndState(State):
             self.app.switch("start")
 
     def draw(self):
+        px.cls(px.COLOR_BLACK)
+
         if self.is_win:
             print_center(px.height // 2 - 20, "Victory!", px.COLOR_YELLOW, self.app.font)
             print_center(px.height // 2 - 10, f"Final score: {self.score}", px.COLOR_WHITE, self.app.font)
