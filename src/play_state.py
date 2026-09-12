@@ -1,60 +1,11 @@
 import pyxel as px
-from src.enemy import Enemy
+from src.enemy import Enemy, BulletEmitter
 from src.player import Player
 from src.common import *
 from src.background import Background
 from src.bonus import Bonus
 from src.blast import Blast
-
-
-yellow = Sprite(16, 0)
-red = Sprite(32, 0)
-blue = Sprite(48, 0)
-green = Sprite(64, 0)
-
-
-ENEMIES = [
-    {
-        "health": 1,
-        "sprite": blue,
-        "is_shooting": False,
-        "score": 10,
-        "xspeed": 1,
-        "yspeed": 0,
-    },
-    {
-        "health": 2,
-        "sprite": red,
-        "is_shooting": False,
-        "score": 20,
-        "xspeed": 1,
-        "yspeed": 0,
-    },
-    {
-        "health": 1,
-        "sprite": yellow,
-        "is_shooting": True,
-        "score": 20,
-        "xspeed": 1,
-        "yspeed": 0,
-    },
-    {
-        "health": 1,
-        "sprite": green,
-        "is_shooting": False,
-        "score": 15,
-        "xspeed": 2,
-        "yspeed": 0,
-    },
-    {
-        "health": 1,
-        "sprite": green,
-        "is_shooting": False,
-        "score": 15,
-        "xspeed": 1,
-        "yspeed": 1,
-    },
-]
+from src.data import ENEMIES
 
 
 class PlayState(State):
@@ -68,7 +19,7 @@ class PlayState(State):
         self.victory_frames = -1
         self.score = 0
         self.wave = 0
-        self.max_wave = 5
+        self.max_wave = 6
         self.chain_timer = Timer(60)
         self.chain_count = 0
         self._bg = Background()
@@ -171,6 +122,10 @@ class PlayState(State):
         px.text(px.width - hs_width, 0, hs_text, px.COLOR_WHITE, self.app.font)
         
         px.text(0, 0, "@" * self.player.health, px.COLOR_WHITE, self.app.font)
+
+        if self.wave <= self.max_wave:
+            px.text(30, 0, f"WAVE: {self.wave}", px.COLOR_WHITE, self.app.font)
+
         self.player.draw()
         draw_list(self.enemies)
         draw_list(self.enemy_bullets)
@@ -180,28 +135,43 @@ class PlayState(State):
     def _setup_wave(self):
         match self.wave:
             case 1:
-                for i in range(10):
-                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[0]))
-                    self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[0]))
+                self._spawn_row(16, 16, 10, ENEMIES["zako"])
+                self._spawn_row(16, 32, 10, ENEMIES["zako"])
             case 2:
-                for i in range(10):
-                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[0]))
-                    self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[3]))
-                    self.enemies.append(Enemy(16 + i * 16, 48, self.enemy_bullets, ENEMIES[0]))
+                self._spawn(16, 16, ENEMIES["shooter"])
+                self._spawn_row(32, 16, 8, ENEMIES["zako"])
+                self._spawn(32 + 8 * 16, 16, ENEMIES["shooter"])
+                self._spawn_row(16, 32, 10, ENEMIES["zako"])
+                self._spawn_row(32, 48, 8, ENEMIES["zako"])
             case 3:
-                for i in range(8):
-                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[3]))
-                    self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[0]))
-                    self.enemies.append(Enemy(16 + i * 16, 48, self.enemy_bullets, ENEMIES[3]))
-                    self.enemies.append(Enemy(16 + i * 16, 64, self.enemy_bullets, ENEMIES[1]))
+                self._spawn_row(16, 16, 2, ENEMIES["shooter"])
+                self._spawn_row(16 + 16 * 2, 16, 6, ENEMIES["zako"])
+                self._spawn_row(16 + 16 * 8, 16, 2, ENEMIES["shooter"])
+                self._spawn_row(16, 32, 10, ENEMIES["zako"])
+                self._spawn_row(16, 48, 10, ENEMIES["shield"])
             case 4:
-                for i in range(8):
-                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[2]))
-                    self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[0]))
-                    self.enemies.append(Enemy(16 + i * 16, 48, self.enemy_bullets, ENEMIES[1]))
+                self._spawn_row(16, 16, 2, ENEMIES["zako"])
+                self._spawn_row(16 + 16 * 2, 16, 6, ENEMIES["shooter"])
+                self._spawn_row(16 + 16 * 8, 16, 2, ENEMIES["zako"])
+                self._spawn_row(16, 32, 10, ENEMIES["fast"])
+                self._spawn_row(16, 48, 10, ENEMIES["fast"])
             case 5:
-                for i in range(10):
-                    self.enemies.append(Enemy(16 + i * 16, 16, self.enemy_bullets, ENEMIES[2]))
-                    self.enemies.append(Enemy(16 + i * 16, 32, self.enemy_bullets, ENEMIES[0]))
-                    self.enemies.append(Enemy(16 + i * 16, 48, self.enemy_bullets, ENEMIES[3]))
-                    self.enemies.append(Enemy(16 + i * 16, 64, self.enemy_bullets, ENEMIES[4]))
+                self._spawn_row(16, 16, 2, ENEMIES["zako"])
+                self._spawn_row(16 + 16 * 2, 16, 6, ENEMIES["shooter"])
+                self._spawn_row(16 + 16 * 8, 16, 2, ENEMIES["zako"])
+                self._spawn_row(16, 32, 10, ENEMIES["shield"])
+                self._spawn_row(16, 48, 10, ENEMIES["fast"])
+                self._spawn_row(16, 64, 10, ENEMIES["diver"])
+            case 6:
+                self._spawn(16, 32, ENEMIES["shooter"])
+                self._spawn(48, 32, ENEMIES["boss"])
+                self._spawn(80, 32, ENEMIES["shooter"])
+                self._spawn_row(16, 48, 5, ENEMIES["shield"])
+
+    def _spawn_row(self, x, y, count, enemy):
+        for i in range(count):
+            self._spawn(x + i * 16, y, enemy)
+            
+    def _spawn(self, x, y, enemy):
+        emitter = BulletEmitter(self.enemy_bullets, enemy["shoot_cd"])
+        self.enemies.append(Enemy(x, y, enemy, emitter))

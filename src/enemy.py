@@ -3,25 +3,39 @@ from src.common import *
 from src.bullet import Bullet
 
 
+class BulletEmitter:
+    def __init__(self, bullets, cooldown):
+        self._bullets = bullets
+        self._shoot_cooldown = Timer(cooldown)
+        self._is_shooting = cooldown > 0
+
+    def update(self, x, y):
+        if self._is_shooting and self._shoot_cooldown.done:
+            bullet = Bullet(x, y, -2, px.COLOR_YELLOW)
+            self._bullets.append(bullet)
+            self._shoot_cooldown.start()
+
+        self._shoot_cooldown.update()
+
+
 class Enemy(Rect):
-    def __init__(self, x, y, bullets, enemy_type):
+    def __init__(self, x, y, enemy_type, emitter):
         super().__init__(x, y, 16, 16)
         self._spawn_x = x
         self._spawn_y = y
         self.x = x
         self.y = y - 32
     
-        self._bullets = bullets
         self._health = enemy_type["health"]
         self._sprite = enemy_type["sprite"]
-        self._is_shooting = enemy_type["is_shooting"]
         self._score = enemy_type["score"]
         self._xspeed = enemy_type["xspeed"]
         self._yspeed = enemy_type["yspeed"]
+        self._can_approach = enemy_type["can_approach"]
+        self._emitter = emitter
 
         self._xdir = 1
         self._start_x = x
-        self._shoot_cooldown = Timer(120)
         self._approach_timer = Timer(px.rndi(250, 2000)) 
         self._approach_timer.start()
         self._is_spawned = False
@@ -30,7 +44,7 @@ class Enemy(Rect):
 
     @property
     def score(self):
-        if self._approach_timer.done:
+        if self._can_approach and self._approach_timer.done:
             return self._score * 2
 
         return self._score
@@ -56,18 +70,14 @@ class Enemy(Rect):
         if px.frame_count % 2 == 0:
             self.y += self._yspeed
 
-        if self._is_shooting and self._shoot_cooldown.done and px.rndf(1, 100) < 1.5:
-            bullet = Bullet(self.x + self.w // 2 - 1, self.y + self.h, -2, px.COLOR_YELLOW)
-            self._bullets.append(bullet)
-            self._shoot_cooldown.start()
+        self._emitter.update(self.x + self.w // 2 - 1, self.y + self.h)
 
-        if self._yspeed == 0 and self._approach_timer.done:
+        if self._can_approach and self._approach_timer.done:
             self._yspeed = 1
 
         if self.y >= px.height:
             self.is_destroyed = True
 
-        self._shoot_cooldown.update()
         self._approach_timer.update()
 
     def draw(self):
