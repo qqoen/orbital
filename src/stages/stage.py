@@ -1,10 +1,9 @@
-from src.common import print_center
+from src.enemy import DoubleBulletEmitter
 import pyxel as px
-from src.enemy import Enemy, BulletEmitter
+from src.enemy import *
 from src.player import Player
 from src.common import *
 from src.blast import Blast
-from src.data import ENEMIES
 
 
 class Stage:
@@ -79,7 +78,7 @@ class Stage:
             self._setup_wave()
             self.chain_timer.stop()
             self.chain_count = 0
-            print(f"Wave: {self._wave}")
+            print(f"{self.name}, Wave: {self._wave}")
             return True
 
         return False
@@ -102,7 +101,13 @@ class Stage:
             self._spawn(x + i * 16, y, enemy)
 
     def _spawn(self, x: int, y: int, enemy):
-        emitter = BulletEmitter(self._enemy_bullets, enemy["shoot_cd"])
+        if enemy["emitter"] == "single":
+            emitter = SingleBulletEmitter(self._enemy_bullets, enemy["shoot_cd"])
+        elif enemy["emitter"] == "double":
+            emitter = DoubleBulletEmitter(self._enemy_bullets, enemy["shoot_cd"])
+        else:
+            emitter = EmptyBulletEmitter(self._enemy_bullets, 0)
+
         self._enemies.append(Enemy(x, y, enemy, emitter))
 
     def _hit_player(self):
@@ -112,44 +117,3 @@ class Stage:
 
     def _add_score(self, amount):
         self.score += amount
-
-
-class Stage1(Stage):
-    def __init__(self, player: Player):
-        super().__init__("Stage 1", 6, player)
-
-    def _setup_wave(self):
-        match self._wave:
-            case 1:
-                self._spawn_row(16, 16, 10, ENEMIES["zako"])
-                self._spawn_row(16, 32, 10, ENEMIES["zako"])
-            case 2:
-                self._spawn(16, 16, ENEMIES["shooter"])
-                self._spawn_row(32, 16, 8, ENEMIES["zako"])
-                self._spawn(32 + 8 * 16, 16, ENEMIES["shooter"])
-                self._spawn_row(16, 32, 10, ENEMIES["zako"])
-                self._spawn_row(32, 48, 8, ENEMIES["zako"])
-            case 3:
-                self._spawn_row(16, 16, 2, ENEMIES["shooter"])
-                self._spawn_row(16 + 16 * 2, 16, 6, ENEMIES["zako"])
-                self._spawn_row(16 + 16 * 8, 16, 2, ENEMIES["shooter"])
-                self._spawn_row(16, 32, 10, ENEMIES["zako"])
-                self._spawn_row(16, 48, 10, ENEMIES["shield"])
-            case 4:
-                self._spawn_row(16, 16, 2, ENEMIES["zako"])
-                self._spawn_row(16 + 16 * 2, 16, 6, ENEMIES["shooter"])
-                self._spawn_row(16 + 16 * 8, 16, 2, ENEMIES["zako"])
-                self._spawn_row(16, 32, 10, ENEMIES["fast"])
-                self._spawn_row(16, 48, 10, ENEMIES["fast"])
-            case 5:
-                self._spawn_row(16, 16, 2, ENEMIES["zako"])
-                self._spawn_row(16 + 16 * 2, 16, 6, ENEMIES["shooter"])
-                self._spawn_row(16 + 16 * 8, 16, 2, ENEMIES["zako"])
-                self._spawn_row(16, 32, 10, ENEMIES["shield"])
-                self._spawn_row(16, 48, 10, ENEMIES["fast"])
-                self._spawn_row(16, 64, 10, ENEMIES["diver"])
-            case 6:
-                self._spawn(16, 32, ENEMIES["shooter"])
-                self._spawn(48, 32, ENEMIES["boss"])
-                self._spawn(80, 32, ENEMIES["shooter"])
-                self._spawn_row(16, 48, 5, ENEMIES["shield"])

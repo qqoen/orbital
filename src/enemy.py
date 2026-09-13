@@ -2,21 +2,39 @@ import pyxel as px
 from src.common import *
 from src.bullet import Bullet
 from src.bonus import Bonus
+from abc import ABC
 
 
-class BulletEmitter:
+class BulletEmitter(ABC):
     def __init__(self, bullets, cooldown):
         self._bullets = bullets
         self._shoot_cooldown = Timer(cooldown)
-        self._is_shooting = cooldown > 0
 
     def update(self, x, y):
-        if self._is_shooting and self._shoot_cooldown.done:
-            bullet = Bullet(x, y, -2, px.COLOR_YELLOW)
-            self._bullets.append(bullet)
+        if self._shoot_cooldown.done:
+            self._spawn_bullets(x, y)
             self._shoot_cooldown.start()
 
         self._shoot_cooldown.update()
+
+    def _spawn_bullets(self, x, y):
+        pass
+
+
+class EmptyBulletEmitter(BulletEmitter):
+    def _spawn_bullets(self, x, y):
+        pass
+
+
+class SingleBulletEmitter(BulletEmitter):
+    def _spawn_bullets(self, x, y):
+        self._bullets.append(Bullet(x, y, 0, 2, px.COLOR_YELLOW))
+
+
+class DoubleBulletEmitter(BulletEmitter):
+    def _spawn_bullets(self, x, y):
+        self._bullets.append(Bullet(x, y, 1, 2, px.COLOR_RED))
+        self._bullets.append(Bullet(x, y, -1, 2, px.COLOR_RED))
 
 
 class Enemy(Rect):
